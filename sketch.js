@@ -4,7 +4,7 @@ let sketch = (p) => {
   let glitchMode = false;
   let glitchFrames = 0;
   let glitchLevel = 0;
-  let maxBlocks = 10;
+  let maxBlocks = 7;
   let textureCache = [];
   let dx = 0, dy = 0;
   let invertMode = false;
@@ -18,6 +18,7 @@ let sketch = (p) => {
 
   p.setup = () => {
     p.createCanvas(p.windowWidth, p.windowHeight);
+    p.pixelDensity(1);
     p.colorMode(p.HSB, 360, 100, 100);
     p.rectMode(p.CORNER);
     p.noSmooth();
@@ -43,7 +44,7 @@ let sketch = (p) => {
       p.background(255);
       p.pop();
     } else {
-      if (glitchLevel < 20) {
+      if (glitchLevel < 30) {
         p.image(glitchOverlay, 0, 0, p.width, p.height);
       } else {
         p.background(0, 0, 100);
@@ -136,12 +137,12 @@ let sketch = (p) => {
     display() {
       p.image(this.texture, this.x, this.y);
 
-      if (glitchMode || glitchLevel === 20) {
-        let copies = p.constrain(glitchLevel, 3, 5); // limitamos copias para móviles
-        let useDifference = (glitchLevel === 20);
+      if (glitchMode || glitchLevel === 15) {
+        let copies = p.constrain(glitchLevel, 1, 2); // limitamos copias para móviles
+        let useDifference = (glitchLevel === 15);
 
-        p.push();
-        if (useDifference) p.blendMode(p.DIFFERENCE);
+      /*   p.push();
+        if (useDifference) p.blendMode(p.DIFFERENCE); */
 
         for (let i = 0; i < copies; i++) {
           let offsetX = p.random(-glitchLevel * 2, glitchLevel * 2);
@@ -149,7 +150,6 @@ let sketch = (p) => {
           p.tint(p.random(360), 80, 100, useDifference ? 60 : (20 + glitchLevel * 2));
           p.image(this.texture, this.x + offsetX, this.y + offsetY);
         }
-
         p.pop();
         p.noTint();
       }
@@ -171,3 +171,11 @@ let sketch = (p) => {
 
 // Inicializa el sketch
 new p5(sketch);
+
+let isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+
+if (isMobile) {
+  p.pixelDensity(1);
+  maxBlocks = 5;
+  useDifference = false;
+}
