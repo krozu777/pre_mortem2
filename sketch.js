@@ -1,9 +1,14 @@
 let bg, glitchOverlay, wall;
 let blocks = [];
 let glitchMode = false;
-let glitchFrames = 1;
+let glitchFrames = 0;
 let glitchLevel = 0;
-let maxBlocks = 100;
+let maxBlocks = 10;
+let textureCache = [];
+let dx = 0, dy = 0;
+
+let invertMode = false;
+let invertTimer = 0;
 
 function preload() {
   bg = loadImage('mercadopago.png');
@@ -13,21 +18,42 @@ function preload() {
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  pixelDensity(1);
+  frameRate(30);
+  //pixelDensity(1);
   colorMode(HSB, 360, 100, 100);
   rectMode(CORNER);
   noSmooth();
+  cacheTextures();
 
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 5; i++) {
     blocks.push(new Block());
   }
 }
 
 function draw() {
-  if (glitchLevel < 20) {
-    background(wall);
+  // Skipping frames si glitchLevel es alto
+  if (glitchLevel > 15 && frameCount % 2 === 0) return;
+
+  // Inversión de colores random
+  if (!invertMode && random(1) < 0.005) {
+    invertMode = true;
+    invertTimer = int(random(10, 60));
+  } else if (invertMode) {
+    invertTimer--;
+    if (invertTimer <= 0) invertMode = false;
+  }
+
+  if (invertMode) {
+    push();
+    blendMode(DIFFERENCE);
+    background(255);
+    pop();
   } else {
-    background(0, 0, 100);
+    if (glitchLevel < 20) {
+      background(wall);
+    } else {
+      background(0, 0, 100);
+    }
   }
 
   if (glitchOverlay && glitchLevel < 20) {
@@ -37,7 +63,7 @@ function draw() {
   }
 
   if (glitchMode && glitchFrames > 0) {
-    translate(random(-glitchLevel * 1.2, glitchLevel * 1.2), random(-glitchLevel * 1.2, glitchLevel * 1.2));
+    translate(dx, dy);
     glitchFrames--;
   } else {
     glitchMode = false;
@@ -56,8 +82,10 @@ function touchStarted() {
 
   glitchMode = true;
   glitchFrames = 2 + glitchLevel;
+  dx = random(-glitchLevel * 1.2, glitchLevel * 1.2);
+  dy = random(-glitchLevel * 1.2, glitchLevel * 1.2);
 
-  let newBlocks = min(4 + glitchLevel, maxBlocks - blocks.length);
+  let newBlocks = min(3 + glitchLevel, maxBlocks - blocks.length);
   for (let i = 0; i < newBlocks; i++) {
     blocks.push(new Block());
   }
@@ -68,7 +96,7 @@ function touchStarted() {
       b.rect_h = random(height * 0.02, height * 0.1);
       b.y += random(-glitchLevel * 5, glitchLevel * 5);
       b.speed = random([-1, 1]) * random(1 + glitchLevel, 3 + glitchLevel * 1.5);
-      b.updateTexture();
+      b.texture = random(textureCache);
     }
   }
 
@@ -82,6 +110,20 @@ function drawScanlines() {
   }
 }
 
+function cacheTextures() {
+  let cols = 6;
+  let rows = 6;
+  let tw = bg.width / cols;
+  let th = bg.height / rows;
+
+  for (let x = 0; x < cols; x++) {
+    for (let y = 0; y < rows; y++) {
+      let tex = bg.get(x * tw, y * th, tw, th);
+      textureCache.push(tex);
+    }
+  }
+}
+
 class Block {
   constructor() {
     this.speed = random([-1, 1]) * random(2, 4 + glitchLevel);
@@ -89,41 +131,28 @@ class Block {
     this.rect_h = random(height * 0.03, height * 0.08);
     this.x = random(width);
     this.y = random(height);
-    this.texture = null;
-    this.updateTexture();
-  }
-
-  updateTexture() {
-    this.texture = bg.get(
-      constrain(int(this.x), 0, bg.width - int(this.rect_w)),
-      constrain(int(this.y), 0, bg.height - int(this.rect_h)),
-      int(this.rect_w),
-      int(this.rect_h)
-    );
+    this.texture = random(textureCache);
   }
 
   display() {
     image(this.texture, this.x, this.y);
 
     if (glitchMode || glitchLevel === 20) {
-      let copies = constrain(glitchLevel, 3, 15);
+      let copies = constrain(glitchLevel, 3, 8);
+      let useDifference = (glitchLevel === 20);
+
+      push();
+      if (useDifference) blendMode(DIFFERENCE);
+
       for (let i = 0; i < copies; i++) {
         let offsetX = random(-glitchLevel * 2, glitchLevel * 2);
         let offsetY = random(-glitchLevel * 2, glitchLevel * 2);
-
-        if (glitchLevel === 20 && i % 2 === 0) {
-          push();
-          blendMode(DIFFERENCE);
-          tint(random(100), 10, 100, 60);
-          image(this.texture, this.x + offsetX, this.y + offsetY);
-          pop();
-        } else {
-          tint(random(360), 80, 100, 20 + glitchLevel * 2);
-          image(this.texture, this.x + offsetX, this.y + offsetY);
-        }
-
-        noTint();
+        tint(random(360), 80, 100, useDifference ? 60 : (20 + glitchLevel * 2));
+        image(this.texture, this.x + offsetX, this.y + offsetY);
       }
+
+      pop();
+      noTint();
     }
   }
 
@@ -135,12 +164,11 @@ class Block {
       this.rect_h = random(height * 0.03, height * 0.08);
       this.y = random(height);
       this.x = (this.speed > 0) ? -this.rect_w : width + this.rect_w;
-      this.updateTexture();
+      this.texture = random(textureCache);
     }
   }
 }
 
-// Se adapta si cambia el tamaño de la ventana
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
