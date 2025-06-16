@@ -24,7 +24,7 @@ let sketch = (p) => {
     p.noSmooth();
     cacheTextures();
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 10; i++) {
       blocks.push(new Block(p));
     }
   };
@@ -32,7 +32,7 @@ let sketch = (p) => {
   p.draw = () => {
     if (!invertMode && p.random(1) < 0.03) {
       invertMode = true;
-      invertTimer = p.int(p.random(10, 40));
+      invertTimer = p.int(p.random(10, 200));
     } else if (invertMode) {
       invertTimer--;
       if (invertTimer <= 0) invertMode = false;
@@ -44,7 +44,7 @@ let sketch = (p) => {
       p.background(255);
       p.pop();
     } else {
-      if (glitchLevel < 30) {
+      if (glitchLevel < 5) {
         p.image(glitchOverlay, 0, 0, p.width, p.height);
       } else {
         p.background(0, 0, 100);
@@ -52,7 +52,7 @@ let sketch = (p) => {
     }
 
     if (glitchOverlay && glitchLevel < 20) {
-      p.tint(0, 0, 100, 10 + glitchLevel * 1.5);
+      p.tint(50, 0, 100, 10 + glitchLevel * 1.5);
       p.image(glitchOverlay, 0, 0, p.width, p.height);
       p.noTint();
     }
@@ -110,8 +110,8 @@ let sketch = (p) => {
   }
 
   function cacheTextures() {
-    let cols = 6;
-    let rows = 6;
+    let cols = 5;
+    let rows = 5;;
     let tw = bg.width / cols;
     let th = bg.height / rows;
 
@@ -126,7 +126,7 @@ let sketch = (p) => {
   class Block {
     constructor(p) {
       this.p = p;
-      this.speed = p.random([-1, 1]) * p.random(2, 4 + glitchLevel);
+      this.speed = p.random([-0.5, 0.5]) * p.random(1, 4 + glitchLevel);
       this.rect_w = p.random(p.width * 0.04, p.width * 0.1);
       this.rect_h = p.random(p.height * 0.03, p.height * 0.08);
       this.x = p.random(p.width);
@@ -138,15 +138,15 @@ let sketch = (p) => {
       p.image(this.texture, this.x, this.y);
 
       if (glitchMode || glitchLevel === 15) {
-        let copies = p.constrain(glitchLevel, 1, 2); // limitamos copias para móviles
+        let copies = p.constrain(glitchLevel, 2, 3); // limitamos copias para móviles
         let useDifference = (glitchLevel === 15);
 
       /*   p.push();
         if (useDifference) p.blendMode(p.DIFFERENCE); */
 
         for (let i = 0; i < copies; i++) {
-          let offsetX = p.random(-glitchLevel * 2, glitchLevel * 2);
-          let offsetY = p.random(-glitchLevel * 2, glitchLevel * 2);
+          let offsetX = p.random(-glitchLevel * 1.5, glitchLevel * 2);
+          let offsetY = p.random(-glitchLevel * 1.5, glitchLevel * 2);
           p.tint(p.random(360), 80, 100, useDifference ? 60 : (20 + glitchLevel * 2));
           p.image(this.texture, this.x + offsetX, this.y + offsetY);
         }
