@@ -44,7 +44,7 @@ let sketch = (p) => {
       p.pop();
     } else {
       if (glitchLevel < 20) {
-        p.image(wall, 0, 0, p.width, p.height);
+        p.image(glitchOverlay, 0, 0, p.width, p.height);
       } else {
         p.background(0, 0, 100);
       }
@@ -52,7 +52,7 @@ let sketch = (p) => {
 
     if (glitchOverlay && glitchLevel < 20) {
       p.tint(0, 0, 100, 10 + glitchLevel * 1.5);
-      p.image(wall, 0, 0, p.width, p.height);
+      p.image(glitchOverlay, 0, 0, p.width, p.height);
       p.noTint();
     }
 
