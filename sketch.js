@@ -13,12 +13,12 @@ let invertTimer = 0;
 function preload() {
   bg = loadImage('mercadopago.png');
   glitchOverlay = loadImage('ejemp6.png');
-  wall = loadImage('wall1.gif');
+  wall = loadImage('wall2.gif');
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  frameRate(30);
+  //frameRate(10);
   //pixelDensity(1);
   colorMode(HSB, 360, 100, 100);
   rectMode(CORNER);
@@ -32,10 +32,10 @@ function setup() {
 
 function draw() {
   // Skipping frames si glitchLevel es alto
-  if (glitchLevel > 15 && frameCount % 2 === 0) return;
+ // if (glitchLevel > 15 && frameCount % 2 === 0) return;
 
   // Inversión de colores random
-  if (!invertMode && random(1) < 0.005) {
+  if (!invertMode && random(1) < 0.05) {
     invertMode = true;
     invertTimer = int(random(10, 60));
   } else if (invertMode) {
