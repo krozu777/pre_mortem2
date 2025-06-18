@@ -10,6 +10,10 @@ let sketch = (p) => {
   let invertMode = false;
   let invertTimer = 0;
 
+  let isDead = false; 
+  let touchCount = 0;
+  let touchMax = Math.floor(Math.random() * 16) + 15; // entre 15 y 30
+
   p.preload = () => {
     bg = p.loadImage('mercadopago.png');
     glitchOverlay = p.loadImage('ejemp6.png');
@@ -17,6 +21,7 @@ let sketch = (p) => {
   };
 
   p.setup = () => {
+  
     p.createCanvas(p.windowWidth, p.windowHeight);
     p.pixelDensity(1);
     p.colorMode(p.HSB, 360, 100, 100);
@@ -30,6 +35,20 @@ let sketch = (p) => {
   };
 
   p.draw = () => {
+    if (isDead) {
+      p.background(0);
+      p.textSize(p.width * 0.15);
+      p.textAlign(p.CENTER, p.CENTER);
+      p.fill('red');
+      p.text("MORTEM", p.width / 2, p.height / 2);
+      p.fill(255);
+      p.textSize(p.width * 0.05);
+      p.text("El dispositivo ha cumplido su ciclo.", p.width / 2, p.height * 0.7);
+      p.text("Descansa en paz digital.", p.width / 2, p.height * 0.75);
+      p.noLoop();
+      return;
+    }
+
     if (!invertMode && p.random(1) < 0.03) {
       invertMode = true;
       invertTimer = p.int(p.random(10, 200));
@@ -73,6 +92,15 @@ let sketch = (p) => {
   };
 
   p.touchStarted = () => {
+    if (isDead) return false;
+
+    // Conteo de toques
+    touchCount++;
+    if (touchCount >= touchMax) {
+      triggerDeath(); // activa el "MORTEM"
+      return false;
+    }
+
     if (glitchLevel < 20) glitchLevel++;
 
     glitchMode = true;
@@ -97,6 +125,10 @@ let sketch = (p) => {
 
     return false;
   };
+
+  function triggerDeath() {
+    isDead = true;
+  }
 
   p.windowResized = () => {
     p.resizeCanvas(p.windowWidth, p.windowHeight);
