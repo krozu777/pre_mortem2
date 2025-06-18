@@ -12,7 +12,7 @@ let sketch = (p) => {
 
   let isDead = false; 
   let touchCount = 0;
-  let touchMax = Math.floor(Math.random() * 16) + 15; // entre 15 y 30
+  let touchMax = Math.floor(Math.random() * 40) + 15; // entre 15 y 30
 
   p.preload = () => {
     bg = p.loadImage('mercadopago.png');
