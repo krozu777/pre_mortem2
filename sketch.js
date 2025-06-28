@@ -12,7 +12,11 @@ let sketch = (p) => {
 
   let isDead = false; 
   let touchCount = 0;
-  let touchMax = Math.floor(Math.random() * 40) + 15; // entre 15 y 30
+  let touchMax = Math.floor(Math.random() * 40) + 15;
+
+  let socket;
+let isSketch3Active = false;
+let sketch3Timer = 0;
 
   p.preload = () => {
     bg = p.loadImage('mercadopago.png');
@@ -20,9 +24,34 @@ let sketch = (p) => {
     wall = p.loadImage('wall2.gif');
   };
 
-  p.setup = () => {
-  
+    p.setup = () => {
     p.createCanvas(p.windowWidth, p.windowHeight);
+
+    // ✅ WebSocket seguro (wss) hacia tu servidor en Render
+    socket = new WebSocket('wss://server-7di9.onrender.com');
+
+    socket.onopen = () => {
+      console.log("Conectado al servidor WebSocket");
+    };
+
+    socket.onerror = (err) => {
+      console.error("Error de WebSocket:", err);
+    };
+
+    socket.onmessage = (event) => {
+      let data;
+      try {
+        data = JSON.parse(event.data);
+      } catch (e) {
+        console.warn("Mensaje no JSON:", event.data);
+        return;
+      }
+
+      if (data.type === "launchSketch3") {
+        launchSketch3();
+      }
+    };
+
     p.pixelDensity(1);
     p.colorMode(p.HSB, 360, 100, 100);
     p.rectMode(p.CORNER);
@@ -35,6 +64,11 @@ let sketch = (p) => {
   };
 
   p.draw = () => {
+    if (isSketch3Active) {
+      runSketch3();
+      return;
+    }
+
     if (isDead) {
       p.background(0);
       p.textSize(p.width * 0.15);
@@ -91,13 +125,29 @@ let sketch = (p) => {
     if (glitchMode) drawScanlines();
   };
 
+  function launchSketch3() {
+    isSketch3Active = true;
+    sketch3Timer = p.millis();
+    console.log("Sketch 3 lanzado");
+  }
+
+  function runSketch3() {
+    p.background(0);
+    p.fill(0, 100, 100);
+    p.noStroke();
+    p.ellipse(p.width / 2, p.height / 2, 100 + 30 * p.sin(p.frameCount * 0.1));
+
+    if (p.millis() - sketch3Timer > 5000) {
+      isSketch3Active = false;
+    }
+  }
+
   p.touchStarted = () => {
     if (isDead) return false;
 
-    // Conteo de toques
     touchCount++;
     if (touchCount >= touchMax) {
-      triggerDeath(); // activa el "MORTEM"
+      triggerDeath();
       return false;
     }
 
@@ -143,7 +193,7 @@ let sketch = (p) => {
 
   function cacheTextures() {
     let cols = 5;
-    let rows = 5;;
+    let rows = 5;
     let tw = bg.width / cols;
     let th = bg.height / rows;
 
@@ -170,11 +220,8 @@ let sketch = (p) => {
       p.image(this.texture, this.x, this.y);
 
       if (glitchMode || glitchLevel === 15) {
-        let copies = p.constrain(glitchLevel, 2, 3); // limitamos copias para móviles
+        let copies = p.constrain(glitchLevel, 2, 3);
         let useDifference = (glitchLevel === 15);
-
-      /*   p.push();
-        if (useDifference) p.blendMode(p.DIFFERENCE); */
 
         for (let i = 0; i < copies; i++) {
           let offsetX = p.random(-glitchLevel * 1.5, glitchLevel * 2);
@@ -182,7 +229,6 @@ let sketch = (p) => {
           p.tint(p.random(360), 80, 100, useDifference ? 60 : (20 + glitchLevel * 2));
           p.image(this.texture, this.x + offsetX, this.y + offsetY);
         }
-        p.pop();
         p.noTint();
       }
     }
@@ -201,13 +247,4 @@ let sketch = (p) => {
   }
 };
 
-// Inicializa el sketch
 new p5(sketch);
-
-let isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
-
-if (isMobile) {
-  p.pixelDensity(1);
-  maxBlocks = 5;
-  useDifference = false;
-}
