@@ -30,27 +30,21 @@ let sketch3Timer = 0;
     // ✅ WebSocket seguro (wss) hacia tu servidor en Render
     socket = new WebSocket('wss://server-7di9.onrender.com');
 
-    socket.onopen = () => {
-      console.log("Conectado al servidor WebSocket");
-    };
-
-    socket.onerror = (err) => {
-      console.error("Error de WebSocket:", err);
-    };
-
     socket.onmessage = (event) => {
-      let data;
-      try {
-        data = JSON.parse(event.data);
-      } catch (e) {
-        console.warn("Mensaje no JSON:", event.data);
-        return;
-      }
+  let data;
+  try {
+    data = JSON.parse(event.data);
+  } catch (e) {
+    console.warn("Mensaje no JSON:", event.data);
+    return;
+  }
 
-      if (data.type === "launchSketch3") {
-        launchSketch3();
-      }
-    };
+  if (data.type === "launchSketch3") {
+    isSketch3Active = data.active;
+    console.log("Sketch 3 activo:", isSketch3Active);
+  }
+};
+
 
     p.pixelDensity(1);
     p.colorMode(p.HSB, 360, 100, 100);
@@ -125,11 +119,11 @@ let sketch3Timer = 0;
     if (glitchMode) drawScanlines();
   };
 
-  function launchSketch3() {
+  /* function launchSketch3() {
     isSketch3Active = true;
     sketch3Timer = p.millis();
     console.log("Sketch 3 lanzado");
-  }
+  } */
 
   function runSketch3() {
     p.background(0);
