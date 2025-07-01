@@ -1,5 +1,19 @@
 let sketch = (p) => {
-  let bg, glitchOverlay, wall;
+  let bgFilenames = [
+    'mercadopago.png',
+    'facebookmarketplace.png',
+  ];
+  let glitchOverlayFilenames = [
+    'ejemp6.png',
+    'ejemplo8.jpeg',
+    'ejemplo9.jpg',
+  ];
+
+  let bg = [];
+  let glitchOverlay = [];
+  let selectedBG;
+  let selectedOverlay;
+
   let blocks = [];
   let glitchMode = false;
   let glitchFrames = 0;
@@ -10,54 +24,101 @@ let sketch = (p) => {
   let invertMode = false;
   let invertTimer = 0;
 
-  let isDead = false; 
+  let isDead = false;
   let touchCount = 0;
   let touchMax = Math.floor(Math.random() * 40) + 15;
 
   let socket;
-let isSketch3Active = false;
-let sketch3Timer = 0;
+  let isSketch3Active = false;
+  let sketch3Timer = 0;
+
+  let loadedImages = 0;
+  let totalImages;
+
+  // Audio
+  let osc, noise;
+  let isAudioStarted = false;
 
   p.preload = () => {
-    bg = p.loadImage('mercadopago.png');
-    glitchOverlay = p.loadImage('ejemp6.png');
-    wall = p.loadImage('wall2.gif');
+    totalImages = bgFilenames.length + glitchOverlayFilenames.length;
+
+    for (let i = 0; i < bgFilenames.length; i++) {
+      p.loadImage(
+        bgFilenames[i],
+        (img) => {
+          bg.push(img);
+          loadedImages++;
+        },
+        () => console.error("❌ No se pudo cargar", bgFilenames[i])
+      );
+    }
+
+    for (let i = 0; i < glitchOverlayFilenames.length; i++) {
+      p.loadImage(
+        glitchOverlayFilenames[i],
+        (img) => {
+          glitchOverlay.push(img);
+          loadedImages++;
+        },
+        () => console.error("❌ No se pudo cargar", glitchOverlayFilenames[i])
+      );
+    }
   };
 
-    p.setup = () => {
+  p.setup = () => {
     p.createCanvas(p.windowWidth, p.windowHeight);
-
-    // ✅ WebSocket seguro (wss) hacia tu servidor en Render
-    socket = new WebSocket('wss://server-7di9.onrender.com');
-
-    socket.onmessage = (event) => {
-  let data;
-  try {
-    data = JSON.parse(event.data);
-  } catch (e) {
-    console.warn("Mensaje no JSON:", event.data);
-    return;
-  }
-
-  if (data.type === "launchSketch3") {
-    isSketch3Active = data.active;
-    console.log("Sketch 3 activo:", isSketch3Active);
-  }
-};
-
-
     p.pixelDensity(1);
     p.colorMode(p.HSB, 360, 100, 100);
     p.rectMode(p.CORNER);
     p.noSmooth();
-    cacheTextures();
+    p.frameRate(30);
 
-    for (let i = 0; i < 10; i++) {
-      blocks.push(new Block(p));
-    }
+    // Audio setup
+    osc = new p5.Oscillator('square');
+    osc.amp(0);
+    osc.freq(440);
+    osc.start();
+
+    noise = new p5.Noise('white');
+    noise.amp(0);
+    noise.start();
+
+    socket = new WebSocket('wss://server-7di9.onrender.com');
+    socket.onmessage = (event) => {
+      let data;
+      try {
+        data = JSON.parse(event.data);
+      } catch (e) {
+        console.warn("Mensaje no JSON:", event.data);
+        return;
+      }
+
+      if (data.type === "launchSketch3") {
+        isSketch3Active = data.active;
+        console.log("Sketch 3 activo:", isSketch3Active);
+      }
+    };
   };
 
   p.draw = () => {
+    if (loadedImages < totalImages) {
+      p.background(0);
+      p.fill(0, 0, 100);
+      p.textAlign(p.CENTER, p.CENTER);
+      p.textSize(32);
+      p.text("Cargando imágenes...", p.width / 2, p.height / 2);
+      return;
+    }
+
+    if (!selectedBG || !selectedOverlay) {
+      selectedBG = p.random(bg);
+      selectedOverlay = p.random(glitchOverlay);
+      cacheTextures();
+      for (let i = 0; i < 10; i++) {
+        blocks.push(new Block(p));
+      }
+    }
+
     if (isSketch3Active) {
       runSketch3();
       return;
@@ -91,16 +152,16 @@ let sketch3Timer = 0;
       p.background(255);
       p.pop();
     } else {
-      if (glitchLevel < 5) {
-        p.image(glitchOverlay, 0, 0, p.width, p.height);
+      if (glitchLevel < 5 && selectedOverlay) {
+        p.image(selectedOverlay, 0, 0, p.width, p.height);
       } else {
         p.background(0, 0, 100);
       }
     }
 
-    if (glitchOverlay && glitchLevel < 20) {
-      p.tint(50, 0, 100, 10 + glitchLevel * 1.5);
-      p.image(glitchOverlay, 0, 0, p.width, p.height);
+    if (selectedOverlay && glitchLevel < 20) {
+      p.tint(5, 0, 100, 10 + glitchLevel * 1.5);
+      p.image(selectedOverlay, 0, 0, p.width, p.height);
       p.noTint();
     }
 
@@ -119,11 +180,21 @@ let sketch3Timer = 0;
     if (glitchMode) drawScanlines();
   };
 
-  /* function launchSketch3() {
-    isSketch3Active = true;
-    sketch3Timer = p.millis();
-    console.log("Sketch 3 lanzado");
-  } */
+  function cacheTextures() {
+    if (!selectedBG || !selectedBG.width) return;
+
+    let cols = 4;
+    let rows = 4;
+    let tw = selectedBG.width / cols;
+    let th = selectedBG.height / rows;
+
+    for (let x = 0; x < cols; x++) {
+      for (let y = 0; y < rows; y++) {
+        let tex = selectedBG.get(x * tw, y * th, tw, th);
+        textureCache.push(tex);
+      }
+    }
+  }
 
   function runSketch3() {
     p.background(0);
@@ -137,13 +208,34 @@ let sketch3Timer = 0;
   }
 
   p.touchStarted = () => {
-    if (isDead) return false;
+    if (isDead || loadedImages < totalImages) return false;
+
+    if (!isAudioStarted) {
+      p.userStartAudio();
+      osc.start();
+      noise.start();
+      isAudioStarted = true;
+    }
 
     touchCount++;
     if (touchCount >= touchMax) {
       triggerDeath();
       return false;
     }
+
+    let oscVol = p.map(touchCount, 0, touchMax, 0.05, 0.2);
+    osc.amp(oscVol, 0.1);
+
+    let oscFreq = p.map(touchCount, 0, touchMax, 800, p.random(2000, 5000));
+    osc.freq(oscFreq, 0.05);
+
+    let noiseVol = p.map(touchCount, 0, touchMax, 0.05, 0.7);
+    noise.amp(noiseVol, 0.1);
+    noise.amp(noiseVol + 0.3, 0.01);
+    noise.amp(noiseVol, 0.15, p.frameCount + 1);
+
+    osc.freq(p.random(6000, 8000), 0.01);
+    osc.freq(oscFreq, 0.15, p.frameCount + 1);
 
     if (glitchLevel < 20) glitchLevel++;
 
@@ -162,7 +254,7 @@ let sketch3Timer = 0;
         b.rect_w = p.random(p.width * 0.03, p.width * 0.15);
         b.rect_h = p.random(p.height * 0.02, p.height * 0.1);
         b.y += p.random(-glitchLevel * 5, glitchLevel * 5);
-        b.speed = p.random([-1, 1]) * p.random(1 + glitchLevel, 3 + glitchLevel * 1.5);
+        b.speed = p.random([-1, 1]) * p.random(1 + glitchLevel * 0.5, 3 + glitchLevel);
         b.texture = p.random(textureCache);
       }
     }
@@ -172,6 +264,11 @@ let sketch3Timer = 0;
 
   function triggerDeath() {
     isDead = true;
+    if (isAudioStarted) {
+      osc.stop();
+      noise.stop();
+      isAudioStarted = false;
+    }
   }
 
   p.windowResized = () => {
@@ -182,20 +279,6 @@ let sketch3Timer = 0;
     p.stroke(0, 0, 100, 4);
     for (let y = 0; y < p.height; y += 6) {
       p.line(0, y, p.width, y);
-    }
-  }
-
-  function cacheTextures() {
-    let cols = 5;
-    let rows = 5;
-    let tw = bg.width / cols;
-    let th = bg.height / rows;
-
-    for (let x = 0; x < cols; x++) {
-      for (let y = 0; y < rows; y++) {
-        let tex = bg.get(x * tw, y * th, tw, th);
-        textureCache.push(tex);
-      }
     }
   }
 
@@ -211,6 +294,7 @@ let sketch3Timer = 0;
     }
 
     display() {
+      if (!this.texture) return;
       p.image(this.texture, this.x, this.y);
 
       if (glitchMode || glitchLevel === 15) {
