@@ -18,7 +18,7 @@ let sketch2 = (p) => {
     p.noSmooth();
     p.pixelDensity(0.5);
     p5.disableFriendlyErrors = true;
-    p.frameRate(20);
+    p.frameRate(5);
     p.userStartAudio();
 
     osc = new p5.Oscillator('square');

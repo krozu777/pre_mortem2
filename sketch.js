@@ -8,7 +8,7 @@ let sketch = (p) => {
     'ejemplo8.jpeg',
     'ejemplo9.jpg',
   ];
-
+  let finalImage;
   let bg = [];
   let glitchOverlay = [];
   let selectedBG;
@@ -41,7 +41,7 @@ let sketch = (p) => {
 
   p.preload = () => {
     totalImages = bgFilenames.length + glitchOverlayFilenames.length;
-
+    finalImage = p.loadImage('cargafinal.png');
     for (let i = 0; i < bgFilenames.length; i++) {
       p.loadImage(
         bgFilenames[i],
@@ -125,16 +125,9 @@ let sketch = (p) => {
     }
 
     if (isDead) {
-      p.background(0);
-      p.textSize(p.width * 0.15);
-      p.textAlign(p.CENTER, p.CENTER);
-      p.fill('red');
-      p.text("MORTEM", p.width / 2, p.height / 2);
-      p.fill(255);
-      p.textSize(p.width * 0.05);
-      p.text("El dispositivo ha cumplido su ciclo.", p.width / 2, p.height * 0.7);
-      p.text("Descansa en paz digital.", p.width / 2, p.height * 0.75);
-      p.noLoop();
+       window.parent.postMessage({ type: 'isDead', value: true }, '*');
+       p.image(finalImage, 0, 0, p.width, p.height);
+
       return;
     }
 

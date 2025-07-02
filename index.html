@@ -16,7 +16,6 @@
       border: none;
       display: block;
     }
-    
   </style>
 </head>
 <body>
@@ -26,17 +25,32 @@
 <script>
   const iframe = document.getElementById("mainSketch");
   let currentSketch = "premortem2.html";
+  let isDead = false;
 
-  setInterval(() => {
-    if (currentSketch === "premortem2.html") {
+  // Escucha mensajes del iframe
+  window.addEventListener("message", (event) => {
+    if (event.data && event.data.type === "isDead" && event.data.value === true) {
+      isDead = true;
+      console.log("isDead recibido. Se detiene todo.");
+    }
+  });
+
+  // Intervalo de cambio, sólo si isDead es falso
+  const interval = setInterval(() => {
+    if (!isDead && currentSketch === "premortem2.html") {
       iframe.src = "placa.html";
       currentSketch = "placa.html";
       setTimeout(() => {
-        iframe.src = "premortem2.html";
-        currentSketch = "premortem2.html";
-      }, 10000); // sketch2 se ejecuta 3 segundos
+        if (!isDead) {
+          iframe.src = "premortem2.html";
+          currentSketch = "premortem2.html";
+        }
+      }, 10000); // muestra placa.html por 10 segundos
+    } else if (isDead) {
+      clearInterval(interval); // detiene el ciclo completamente
     }
-  }, 10000); // cada 10 segundos cambia a sketch2
+  }, 10000);
+
 </script>
 
 </body>
