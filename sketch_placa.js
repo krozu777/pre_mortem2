@@ -1,22 +1,22 @@
 let sketch2 = (p) => {
   let imgs = [];
   let glitchTimer = 0;
-  let pixelRes = 6;
+  let pixelRes = 8;
 
   let osc, noise, filter;
   let audioStarted = false;
+  let currentImg;
 
   p.preload = () => {
     imgs[0] = p.loadImage('placa1.jpg');
     imgs[1] = p.loadImage('placa2.jpg');
     imgs[2] = p.loadImage('placa3.jpg');
-    //rotura = p.loadImage('rotura.jpg');
   };
 
   p.setup = () => {
     p.createCanvas(p.windowWidth, p.windowHeight);
     p.noSmooth();
-    p.frameRate(10);
+    p.frameRate(20);
     p.userStartAudio();
 
     osc = new p5.Oscillator('square');
@@ -39,19 +39,12 @@ let sketch2 = (p) => {
   };
 
   p.draw = () => {
-    /* if (!imgs[0] || !rotura) {
-      p.background(0);
-      p.fill(255);
-      p.textAlign(p.CENTER, p.CENTER);
-      p.text("Cargando imágenes...", p.width / 2, p.height / 2);
-      return;
-    }
- */
-    drawPixelated(p.random(imgs));
+    currentImg = imgs[p.floor(p.random(imgs.length))];
+    drawPixelated(currentImg);
 
     if (p.millis() > glitchTimer) {
       glitchWhiteLines();
-      glitchCuts();
+      glitchCuts(currentImg);
       glitchScanLines();
       glitchStripes();
       glitchTimer = p.millis() + p.random(300, 700);
@@ -69,7 +62,6 @@ let sketch2 = (p) => {
     }
 
     simulateScreenFracture();
-
   };
 
   function drawPixelated(img) {
@@ -79,9 +71,15 @@ let sketch2 = (p) => {
 
     for (let y = 0; y < smallH; y++) {
       for (let x = 0; x < smallW; x++) {
-        let sx = p.int(p.map(x, 0, smallW, 0, img.width));
-        let sy = p.int(p.map(y, 0, smallH, 0, img.height));
-        let c = img.get(sx, sy);
+        let sx = p.int(x * img.width / smallW);
+        let sy = p.int(y * img.height / smallH);
+        let idx = 4 * (sy * img.width + sx);
+        let c = p.color(
+          img.pixels[idx],
+          img.pixels[idx + 1],
+          img.pixels[idx + 2],
+          img.pixels[idx + 3]
+        );
         p.fill(c);
         p.rect(x * pixelRes, y * pixelRes, pixelRes, pixelRes);
       }
@@ -89,28 +87,29 @@ let sketch2 = (p) => {
   }
 
   function glitchWhiteLines() {
-    let lines = p.int(p.random(2, 6));
+    let lines = p.int(p.random(2, 4));
     for (let i = 0; i < lines; i++) {
       let y = p.int(p.random(p.height));
       let h = p.int(p.random(2, 6));
       p.fill(255);
+      p.noStroke();
       p.rect(0, y, p.width, h);
     }
   }
 
-  function glitchCuts() {
-    let cuts = p.int(p.random(1, 100));
+  function glitchCuts(img) {
+    let cuts = p.int(p.random(1, 30));
     for (let i = 0; i < cuts; i++) {
       if (p.random() < 0.5) {
         let y = p.int(p.random(p.height));
         let h = p.int(p.random(4, 20));
         let offset = p.int(p.random(-60, 60));
-        p.copy(p.random(imgs), 0, y, p.width, h, offset, y, p.width, h);
+        p.copy(img, 0, y, p.width, h, offset, y, p.width, h);
       } else {
         let x = p.int(p.random(p.width));
         let w = p.int(p.random(4, 20));
         let offset = p.int(p.random(-30, 30));
-        p.copy(p.random(imgs), x, 0, w, p.height, x, offset, w, p.height);
+        p.copy(img, x, 0, w, p.height, x, offset, w, p.height);
       }
     }
   }
@@ -127,11 +126,8 @@ let sketch2 = (p) => {
         let y = j * fragH;
         let frag = p.get(x, y, fragW, fragH);
         p.push();
-        let offsetX = p.random(-3, 3);
-        let offsetY = p.random(-3, 30);
-        let angle = p.random(-p.PI / 60, p.PI / 60);
-        p.translate(x + fragW / 2 + offsetX, y + fragH / 2 + offsetY);
-        p.rotate(angle);
+        p.translate(x + fragW / 2 + p.random(-3, 3), y + fragH / 2 + p.random(-3, 30));
+        p.rotate(p.random(-p.PI / 60, p.PI / 60));
         p.image(frag, -fragW / 2, -fragH / 2);
         p.pop();
       }
@@ -139,36 +135,31 @@ let sketch2 = (p) => {
   }
 
   function glitchScanLines() {
-    let lines = p.int(p.random(3, 10));
+    let lines = p.int(p.random(2, 5));
     for (let i = 0; i < lines; i++) {
       let y = p.int(p.random(p.height));
-      let h = p.int(p.random(1, 4));
-      let offset = p.int(p.random(-20, 20));
-      let r = p.get(0, y, p.width, h);
-      let g = p.get(0, y, p.width, h);
-      let b = p.get(0, y, p.width, h);
+      let h = 2;
+      let slice = p.get(0, y, p.width, h);
       p.push();
       p.tint(255, 0, 0);
-      p.image(r, offset, y);
+      p.image(slice, p.random(-10, 10), y);
       p.tint(0, 255, 0);
-      p.image(g, -offset, y + 1);
+      p.image(slice, p.random(-10, 10), y + 1);
       p.tint(0, 0, 255);
-      p.image(b, offset * 1.5, y + 2);
+      p.image(slice, p.random(-10, 10), y + 2);
       p.pop();
     }
   }
 
   function glitchStripes() {
-    let stripes = p.int(p.random(4, 10));
+    let stripes = p.int(p.random(2, 6));
     for (let i = 0; i < stripes; i++) {
       let y = p.int(p.random(p.height));
       let h = p.int(p.random(2, 6));
       let stripe = p.get(0, y, p.width, h);
-      let offsetX = p.int(p.random(-40, 40));
-      let stretch = p.random(1.5, 4);
       p.push();
-      p.translate(offsetX, 0);
-      p.image(stripe, 0, y, p.width * stretch, h);
+      p.translate(p.random(-20, 20), 0);
+      p.image(stripe, 0, y, p.width * p.random(1.5, 3), h);
       p.pop();
     }
   }
