@@ -1,6 +1,5 @@
 let sketch2 = (p) => {
   let imgs = [];
-  let rotura;
   let glitchTimer = 0;
   let pixelRes = 6;
 
@@ -17,7 +16,7 @@ let sketch2 = (p) => {
   p.setup = () => {
     p.createCanvas(p.windowWidth, p.windowHeight);
     p.noSmooth();
-    p.frameRate(40);
+    p.frameRate(10);
     p.userStartAudio();
 
     osc = new p5.Oscillator('square');
