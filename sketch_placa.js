@@ -11,7 +11,7 @@ let sketch2 = (p) => {
     imgs[0] = p.loadImage('placa1.jpg');
     imgs[1] = p.loadImage('placa2.jpg');
     imgs[2] = p.loadImage('placa3.jpg');
-    rotura = p.loadImage('rotura.jpg');
+    //rotura = p.loadImage('rotura.jpg');
   };
 
   p.setup = () => {
@@ -40,14 +40,14 @@ let sketch2 = (p) => {
   };
 
   p.draw = () => {
-    if (!imgs[0] || !rotura) {
+    /* if (!imgs[0] || !rotura) {
       p.background(0);
       p.fill(255);
       p.textAlign(p.CENTER, p.CENTER);
       p.text("Cargando imágenes...", p.width / 2, p.height / 2);
       return;
     }
-
+ */
     drawPixelated(p.random(imgs));
 
     if (p.millis() > glitchTimer) {
@@ -71,9 +71,6 @@ let sketch2 = (p) => {
 
     simulateScreenFracture();
 
-    p.tint(80, 1);
-    p.image(rotura, 0, 0, p.width, p.height);
-    p.noTint();
   };
 
   function drawPixelated(img) {
