@@ -1,47 +1,69 @@
 let sketch = (p) => {
-  let bgFilenames = [
-    'mercadopago.png',
-    'facebookmarketplace.png',
-  ];
-  let glitchOverlayFilenames = [
-    'ejemp6.png',
-    'ejemplo8.jpeg',
-    'ejemplo9.jpg',
-  ];
-  let finalImage;
-  let bg = [];
-  let glitchOverlay = [];
-  let selectedBG;
-  let selectedOverlay;
+  // Archivos de imagen de fondo
+  let bgFilenames = ['mercadopago.png', 'facebookmarketplace.png'];
 
+  // Imágenes de superposición glitch
+  let glitchOverlayFilenames = ['ejemp6.png', 'ejemplo8.jpeg', 'ejemplo9.jpg'];
+
+  // Imagen final que se muestra al “morir”
+  let finalImage;
+
+  // Arrays para guardar las imágenes cargadas
+  let bg = [], glitchOverlay = [];
+
+  // Imágenes seleccionadas al azar
+  let selectedBG, selectedOverlay;
+
+  // Bloques glitch que se mueven
   let blocks = [];
+
+  // Variables de estado glitch
   let glitchMode = false;
   let glitchFrames = 0;
   let glitchLevel = 0;
   let maxBlocks = 7;
   let textureCache = [];
+
+  // Movimiento aleatorio de imagen cuando hay glitch
   let dx = 0, dy = 0;
+
+  // Modo de inversión de color (efecto visual)
   let invertMode = false;
   let invertTimer = 0;
 
+  // Estado de muerte
   let isDead = false;
+
+  // Conteo de toques
   let touchCount = 0;
+
+  // Límite aleatorio de toques para morir
   let touchMax = Math.floor(Math.random() * 40) + 15;
 
+  // Control de temporizador para reset
+  let resetTimerStarted = false;
+  let resetStartTime = 0;
+
+  // WebSocket para control externo
   let socket;
   let isSketch3Active = false;
   let sketch3Timer = 0;
 
+  // Carga de imágenes
   let loadedImages = 0;
   let totalImages;
 
-  // Audio
+  // Variables de audio
   let osc, noise;
   let isAudioStarted = false;
 
+  // ---------------------------
+  // 🔄 CARGA DE IMÁGENES
   p.preload = () => {
     totalImages = bgFilenames.length + glitchOverlayFilenames.length;
     finalImage = p.loadImage('cargafinal.png');
+
+    // Carga de imágenes de fondo
     for (let i = 0; i < bgFilenames.length; i++) {
       p.loadImage(
         bgFilenames[i],
@@ -53,6 +75,7 @@ let sketch = (p) => {
       );
     }
 
+    // Carga de imágenes overlay (efecto glitch)
     for (let i = 0; i < glitchOverlayFilenames.length; i++) {
       p.loadImage(
         glitchOverlayFilenames[i],
@@ -65,6 +88,8 @@ let sketch = (p) => {
     }
   };
 
+  // ---------------------------
+  // 🎨 CONFIGURACIÓN INICIAL
   p.setup = () => {
     p.createCanvas(p.windowWidth, p.windowHeight);
     p.pixelDensity(1);
@@ -73,16 +98,14 @@ let sketch = (p) => {
     p.noSmooth();
     p.frameRate(30);
 
-    // Audio setup
+    // Configuración de audio
     osc = new p5.Oscillator('square');
-    osc.amp(0);
-    osc.freq(440);
-    osc.start();
+    osc.amp(0); osc.freq(440); osc.start();
 
     noise = new p5.Noise('white');
-    noise.amp(0);
-    noise.start();
+    noise.amp(0); noise.start();
 
+    // WebSocket: escucha señales externas
     socket = new WebSocket('wss://server-7di9.onrender.com');
     socket.onmessage = (event) => {
       let data;
@@ -100,8 +123,11 @@ let sketch = (p) => {
     };
   };
 
+  // ---------------------------
+  // 🖼️ LOOP PRINCIPAL
   p.draw = () => {
     if (loadedImages < totalImages) {
+      // Muestra mensaje de carga hasta que estén listas todas las imágenes
       p.background(0);
       p.fill(0, 0, 100);
       p.textAlign(p.CENTER, p.CENTER);
@@ -110,6 +136,7 @@ let sketch = (p) => {
       return;
     }
 
+    // Si aún no se han seleccionado imágenes de fondo y overlay, hacerlo
     if (!selectedBG || !selectedOverlay) {
       selectedBG = p.random(bg);
       selectedOverlay = p.random(glitchOverlay);
@@ -119,18 +146,26 @@ let sketch = (p) => {
       }
     }
 
+    // Si está activo el sketch 3 (por WebSocket), se dibuja eso
     if (isSketch3Active) {
       runSketch3();
       return;
     }
 
+    // Si está en estado "muerto"
     if (isDead) {
-       window.parent.postMessage({ type: 'isDead', value: true }, '*');
-       p.image(finalImage, 0, 0, p.width, p.height);
+      window.parent.postMessage({ type: 'isDead', value: true }, '*');
+      p.image(finalImage, 0, 0, p.width, p.height);
+
+      // Si pasaron 2 minutos, se reinicia
+      if (resetTimerStarted && p.millis() - resetStartTime >= 120000) {
+        resetSketch();
+      }
 
       return;
     }
 
+    // Inversión de color aleatoria
     if (!invertMode && p.random(1) < 0.03) {
       invertMode = true;
       invertTimer = p.int(p.random(10, 200));
@@ -148,7 +183,7 @@ let sketch = (p) => {
       if (glitchLevel < 5 && selectedOverlay) {
         p.image(selectedOverlay, 0, 0, p.width, p.height);
       } else {
-        p.background(0, 0, 100);
+        p.background(0, 0, 100); // blanco HSB
       }
     }
 
@@ -165,6 +200,7 @@ let sketch = (p) => {
       glitchMode = false;
     }
 
+    // Mostrar y mover bloques glitch
     for (let b of blocks) {
       b.display();
       b.move();
@@ -173,11 +209,12 @@ let sketch = (p) => {
     if (glitchMode) drawScanlines();
   };
 
+  // ---------------------------
+  // 🧩 Crea caché de texturas desde la imagen de fondo
   function cacheTextures() {
     if (!selectedBG || !selectedBG.width) return;
 
-    let cols = 4;
-    let rows = 4;
+    let cols = 4, rows = 4;
     let tw = selectedBG.width / cols;
     let th = selectedBG.height / rows;
 
@@ -189,6 +226,8 @@ let sketch = (p) => {
     }
   }
 
+  // ---------------------------
+  // 🌕 Sketch 3 alternativo (cuando llega señal externa)
   function runSketch3() {
     p.background(0);
     p.fill(0, 100, 100);
@@ -200,6 +239,8 @@ let sketch = (p) => {
     }
   }
 
+  // ---------------------------
+  // 👆 Detectar toque/tap en pantalla
   p.touchStarted = () => {
     if (isDead || loadedImages < totalImages) return false;
 
@@ -211,11 +252,14 @@ let sketch = (p) => {
     }
 
     touchCount++;
+
+    // Si se alcanzó el límite de toques, muere
     if (touchCount >= touchMax) {
       triggerDeath();
       return false;
     }
 
+    // Cambios de volumen y frecuencia del sonido
     let oscVol = p.map(touchCount, 0, touchMax, 0.05, 0.2);
     osc.amp(oscVol, 0.1);
 
@@ -230,6 +274,7 @@ let sketch = (p) => {
     osc.freq(p.random(6000, 8000), 0.01);
     osc.freq(oscFreq, 0.15, p.frameCount + 1);
 
+    // Incrementar efectos glitch
     if (glitchLevel < 20) glitchLevel++;
 
     glitchMode = true;
@@ -237,11 +282,13 @@ let sketch = (p) => {
     dx = p.random(-glitchLevel * 1.2, glitchLevel * 1.2);
     dy = p.random(-glitchLevel * 1.2, glitchLevel * 1.2);
 
+    // Agrega nuevos bloques glitch
     let newBlocks = Math.min(3 + glitchLevel, maxBlocks - blocks.length);
     for (let i = 0; i < newBlocks; i++) {
       blocks.push(new Block(p));
     }
 
+    // Modifica algunos bloques aleatoriamente
     for (let b of blocks) {
       if (p.random(1) < 0.4) {
         b.rect_w = p.random(p.width * 0.03, p.width * 0.15);
@@ -255,8 +302,13 @@ let sketch = (p) => {
     return false;
   };
 
+  // ---------------------------
+  // ☠️ Activar estado de muerte
   function triggerDeath() {
     isDead = true;
+    resetTimerStarted = true;
+    resetStartTime = p.millis();
+
     if (isAudioStarted) {
       osc.stop();
       noise.stop();
@@ -264,10 +316,52 @@ let sketch = (p) => {
     }
   }
 
+  // ---------------------------
+  // 🔄 Reset del sketch después de 2 min
+  function resetSketch() {
+    // Reestablecer variables
+    blocks = [];
+    glitchMode = false;
+    glitchFrames = 0;
+    glitchLevel = 0;
+    textureCache = [];
+    dx = 0; dy = 0;
+    invertMode = false;
+    invertTimer = 0;
+
+    isDead = false;
+    resetTimerStarted = false;
+    resetStartTime = 0;
+
+    touchCount = 0;
+    touchMax = Math.floor(Math.random() * 40) + 15;
+
+    selectedBG = p.random(bg);
+    selectedOverlay = p.random(glitchOverlay);
+    cacheTextures();
+
+    for (let i = 0; i < 10; i++) {
+      blocks.push(new Block(p));
+    }
+
+    if (!isAudioStarted) {
+      osc.start();
+      noise.start();
+      isAudioStarted = true;
+    }
+
+    // 🔁 Comunicar al padre que ya no está muerto
+    window.parent.postMessage({ type: 'isDead', value: false }, '*');
+  }
+
+  // ---------------------------
+  // ⚙️ Ajustar canvas al tamaño de ventana
   p.windowResized = () => {
     p.resizeCanvas(p.windowWidth, p.windowHeight);
   };
 
+  // ---------------------------
+  // 📺 Líneas horizontales estilo CRT
   function drawScanlines() {
     p.stroke(0, 0, 100, 4);
     for (let y = 0; y < p.height; y += 6) {
@@ -275,6 +369,8 @@ let sketch = (p) => {
     }
   }
 
+  // ---------------------------
+  // 🧱 Clase de bloques glitch
   class Block {
     constructor(p) {
       this.p = p;
@@ -286,6 +382,7 @@ let sketch = (p) => {
       this.texture = p.random(textureCache);
     }
 
+    // Mostrar bloque en pantalla
     display() {
       if (!this.texture) return;
       p.image(this.texture, this.x, this.y);
@@ -304,9 +401,11 @@ let sketch = (p) => {
       }
     }
 
+    // Movimiento horizontal del bloque
     move() {
       this.x += this.speed;
 
+      // Si sale de la pantalla, reinicia su posición
       if (this.x > p.width + this.rect_w || this.x < -this.rect_w) {
         this.rect_w = p.random(p.width * 0.04, p.width * 0.1);
         this.rect_h = p.random(p.height * 0.03, p.height * 0.08);
@@ -318,4 +417,5 @@ let sketch = (p) => {
   }
 };
 
+// Inicializa el sketch
 new p5(sketch);

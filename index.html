@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Controlador de Sketches</title>
+
+  <!-- Estilos para asegurar que el iframe ocupe toda la ventana -->
   <style>
     html, body {
       margin: 0;
@@ -11,47 +13,63 @@
       background: black;
     }
     iframe {
-      width: 100vw;
-      height: 100vh;
+      width: 100vw;         /* Ocupa 100% del ancho de la ventana */
+      height: 100vh;        /* Ocupa 100% del alto de la ventana */
       border: none;
       display: block;
     }
   </style>
 </head>
+
 <body>
 
-<iframe id="mainSketch" src="premortem2.html"></iframe>
+  <!-- Este iframe carga el sketch principal al inicio -->
+  <iframe id="mainSketch" src="premortem2.html"></iframe>
 
-<script>
-  const iframe = document.getElementById("mainSketch");
-  let currentSketch = "premortem2.html";
-  let isDead = false;
+  <script>
+    // Obtiene referencia al iframe
+    const iframe = document.getElementById("mainSketch");
 
-  // Escucha mensajes del iframe
-  window.addEventListener("message", (event) => {
-    if (event.data && event.data.type === "isDead" && event.data.value === true) {
-      isDead = true;
-      console.log("isDead recibido. Se detiene todo.");
-    }
-  });
+    // Guarda el nombre del sketch actual cargado en el iframe
+    let currentSketch = "premortem2.html";
 
-  // Intervalo de cambio, sólo si isDead es falso
-  const interval = setInterval(() => {
-    if (!isDead && currentSketch === "premortem2.html") {
-      iframe.src = "placa.html";
-      currentSketch = "placa.html";
-      setTimeout(() => {
-        if (!isDead) {
-          iframe.src = "premortem2.html";
-          currentSketch = "premortem2.html";
-        }
-      }, 10000); // muestra placa.html por 10 segundos
-    } else if (isDead) {
-      clearInterval(interval); // detiene el ciclo completamente
-    }
-  }, 10000);
+    // Estado de "muerte" enviado desde el sketch (por postMessage)
+    let isDead = false;
 
-</script>
+    // ⬇️ Escucha los mensajes enviados desde dentro del iframe
+    window.addEventListener("message", (event) => {
+      // Verifica si se recibió el mensaje especial "isDead"
+      if (event.data && event.data.type === "isDead" && event.data.value === true) {
+        isDead = true;
+        console.log("isDead recibido. Se detiene todo.");
+      }
+    });
+
+    // ⏱ Intervalo que cada 10 segundos alterna entre los sketches
+    const interval = setInterval(() => {
+
+      // Si el sketch actual no está "muerto" y es el premortem
+      if (!isDead && currentSketch === "premortem2.html") {
+        // Cambia al sketch de "placa"
+        iframe.src = "placa.html";
+        currentSketch = "placa.html";
+
+        // Luego de 10 segundos, vuelve a premortem2 si aún no está muerto
+        setTimeout(() => {
+          if (!isDead) {
+            iframe.src = "premortem2.html";
+            currentSketch = "premortem2.html";
+          }
+        }, 10000); // 10 segundos
+
+      } else if (isDead) {
+        // Si se activó el estado "muerto", se detiene el ciclo
+        clearInterval(interval);
+      }
+
+    }, 10000); // Ejecuta esto cada 10 segundos
+
+  </script>
 
 </body>
 </html>
