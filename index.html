@@ -1,16 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.7/lib/p5.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.7/lib/addons/p5.sound.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="style.css">
-    <meta charset="utf-8" />
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Controlador de Sketches</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: black;
+    }
+    iframe {
+      width: 100vw;
+      height: 100vh;
+      border: none;
+      display: block;
+    }
+  </style>
+</head>
+<body>
 
-  </head>
-  <body>
-    <main>
-    </main>
-    <script src="sketch.js"></script>
-    
-  </body>
+<iframe id="mainSketch" src="premortem2.html"></iframe>
+
+<script>
+  const iframe = document.getElementById("mainSketch");
+  let currentSketch = "premortem2.html";
+
+  setInterval(() => {
+    if (currentSketch === "premortem2.html") {
+      iframe.src = "placa.html";
+      currentSketch = "placa.html";
+      setTimeout(() => {
+        iframe.src = "premortem2.html";
+        currentSketch = "premortem2.html";
+      }, 10000); // sketch2 se ejecuta 3 segundos
+    }
+  }, 10000); // cada 10 segundos cambia a sketch2
+</script>
+
+</body>
 </html>
