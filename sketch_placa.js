@@ -16,6 +16,8 @@ let sketch2 = (p) => {
   p.setup = () => {
     p.createCanvas(p.windowWidth, p.windowHeight);
     p.noSmooth();
+    pixelDensity(1);
+    p5.disableFriendlyErrors = true;
     p.frameRate(20);
     p.userStartAudio();
 
