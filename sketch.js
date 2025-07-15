@@ -67,7 +67,7 @@ let sketch = (p) => {
   // 🔄 CARGA DE IMÁGENES
   p.preload = () => {
     totalImages = bgFilenames.length + glitchOverlayFilenames.length;
-    finalImage = p.loadImage('cargafinal.png');
+    finalImage = p.loadImage('cargafinal1.png');
     cruzImg = p.loadImage('arriba_borde.jpg');
 
     // Carga de imágenes de fondo
@@ -164,9 +164,11 @@ let sketch = (p) => {
       window.parent.postMessage({ type: 'isDead', value: true }, '*');
       p.image(cruzImg, 0, 0, p.width, p.height);
 
-        mostrarCruz = true;
-        p.image(finalImage, cruzX, cruzY, 400, 400); // <-- la imagen se dibuja donde hiciste clic
-  
+       if (mostrarCruz === true) {
+  p.blendMode(p.ADD); // o p.MULTIPLY, p.SCREEN, etc.
+  p.image(finalImage, cruzX, cruzY, 2000, 1900);
+  p.blendMode(p.BLEND); // restablecer al modo normal
+}
 
       // Si pasaron 2 minutos, se reinicia
       if (resetTimerStarted && p.millis() - resetStartTime >= 120000) {
