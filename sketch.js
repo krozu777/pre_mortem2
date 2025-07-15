@@ -58,11 +58,11 @@ let sketch = (p) => {
   let osc, noise;
   let isAudioStarted = false;
 
-  //variable cruz
-
-  let mostrarCruz = false
+  // Variable cruz
+  let mostrarCruz = false;
   let cruzX = 0;
   let cruzY = 0;
+
   // ---------------------------
   // 🔄 CARGA DE IMÁGENES
   p.preload = () => {
@@ -161,16 +161,14 @@ let sketch = (p) => {
 
     // Si está en estado "muerto"
     if (isDead) {
-      window.parent.postMessage({ type: 'isDead', value: true }, '*');
       p.image(cruzImg, 0, 0, p.width, p.height);
 
-       if (mostrarCruz === true) {
-  p.blendMode(p.ADD); // o p.MULTIPLY, p.SCREEN, etc.
-  p.image(finalImage, cruzX, cruzY, 2000, 1900);
-  p.blendMode(p.BLEND); // restablecer al modo normal
-}
+      if (mostrarCruz === true) {
+        p.blendMode(p.ADD);
+        p.image(finalImage, cruzX, cruzY, 2000, 1900);
+        p.blendMode(p.BLEND);
+      }
 
-      // Si pasaron 2 minutos, se reinicia
       if (resetTimerStarted && p.millis() - resetStartTime >= 120000) {
         resetSketch();
       }
@@ -178,7 +176,7 @@ let sketch = (p) => {
       return;
     }
 
-    // Inversión de color aleatoria
+    // Efecto de inversión de color aleatorio
     if (!invertMode && p.random(1) < 0.03) {
       invertMode = true;
       invertTimer = p.int(p.random(10, 200));
@@ -196,7 +194,7 @@ let sketch = (p) => {
       if (glitchLevel < 5 && selectedOverlay) {
         p.image(selectedOverlay, 0, 0, p.width, p.height);
       } else {
-        p.background(0, 0, 100); // blanco HSB
+        p.background(0, 0, 100);
       }
     }
 
@@ -213,7 +211,6 @@ let sketch = (p) => {
       glitchMode = false;
     }
 
-    // Mostrar y mover bloques glitch
     for (let b of blocks) {
       b.display();
       b.move();
@@ -221,11 +218,8 @@ let sketch = (p) => {
 
     if (glitchMode) drawScanlines();
   };
-  ///////////////////////////////////////////////////////
 
-
-  // ---------------------------
-  // 🧩 Crea caché de texturas desde la imagen de fondo
+  // ⚙️ Crea caché de texturas desde la imagen de fondo
   function cacheTextures() {
     if (!selectedBG || !selectedBG.width) return;
 
@@ -241,7 +235,6 @@ let sketch = (p) => {
     }
   }
 
-  // ---------------------------
   // 🌕 Sketch 3 alternativo (cuando llega señal externa)
   function runSketch3() {
     p.background(0);
@@ -258,12 +251,12 @@ let sketch = (p) => {
   // 👆 Detectar toque/tap en pantalla
   p.touchStarted = () => {
 
-     if (isDead) {
-    mostrarCruz = true;
-    cruzX = p.mouseX;
-    cruzY = p.mouseY;
-    return false;
-  }
+    if (isDead) {
+      mostrarCruz = true;
+      cruzX = p.mouseX;
+      cruzY = p.mouseY;
+      return false;
+    }
 
     if (isDead || loadedImages < totalImages) return false;
 
@@ -329,10 +322,10 @@ let sketch = (p) => {
   };
 
   p.mouseReleased = function () {
-  if (isDead) {
-    mostrarCruz = false;
-  }
-};
+    if (isDead) {
+      mostrarCruz = false;
+    }
+  };
 
   // ---------------------------
   // ☠️ Activar estado de muerte
