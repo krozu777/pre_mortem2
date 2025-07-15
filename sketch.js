@@ -165,7 +165,7 @@ let sketch = (p) => {
 
       if (mostrarCruz === true) {
         p.blendMode(p.ADD);
-        p.image(finalImage, cruzX, cruzY, 1000, 1900);
+        p.image(finalImage, cruzX, cruzY, 1400, 2000);
         p.blendMode(p.BLEND);
       }
 
