@@ -52,16 +52,23 @@ let sketch = (p) => {
   // Carga de imágenes
   let loadedImages = 0;
   let totalImages;
+  let cruzImg;
 
   // Variables de audio
   let osc, noise;
   let isAudioStarted = false;
 
+  //variable cruz
+
+  let mostrarCruz = false
+  let cruzX = 0;
+  let cruzY = 0;
   // ---------------------------
   // 🔄 CARGA DE IMÁGENES
   p.preload = () => {
     totalImages = bgFilenames.length + glitchOverlayFilenames.length;
     finalImage = p.loadImage('cargafinal.png');
+    cruzImg = p.loadImage('arriba_borde.jpg');
 
     // Carga de imágenes de fondo
     for (let i = 0; i < bgFilenames.length; i++) {
@@ -155,7 +162,11 @@ let sketch = (p) => {
     // Si está en estado "muerto"
     if (isDead) {
       window.parent.postMessage({ type: 'isDead', value: true }, '*');
-      p.image(finalImage, 0, 0, p.width, p.height);
+      p.image(cruzImg, 0, 0, p.width, p.height);
+
+        mostrarCruz = true;
+        p.image(finalImage, cruzX, cruzY, 400, 400); // <-- la imagen se dibuja donde hiciste clic
+  
 
       // Si pasaron 2 minutos, se reinicia
       if (resetTimerStarted && p.millis() - resetStartTime >= 120000) {
@@ -208,6 +219,8 @@ let sketch = (p) => {
 
     if (glitchMode) drawScanlines();
   };
+  ///////////////////////////////////////////////////////
+
 
   // ---------------------------
   // 🧩 Crea caché de texturas desde la imagen de fondo
@@ -242,6 +255,14 @@ let sketch = (p) => {
   // ---------------------------
   // 👆 Detectar toque/tap en pantalla
   p.touchStarted = () => {
+
+     if (isDead) {
+    mostrarCruz = true;
+    cruzX = p.mouseX;
+    cruzY = p.mouseY;
+    return false;
+  }
+
     if (isDead || loadedImages < totalImages) return false;
 
     if (!isAudioStarted) {
@@ -297,10 +318,19 @@ let sketch = (p) => {
         b.speed = p.random([-1, 1]) * p.random(1 + glitchLevel * 0.5, 3 + glitchLevel);
         b.texture = p.random(textureCache);
       }
+      ///////////
+
+
     }
 
     return false;
   };
+
+  p.mouseReleased = function () {
+  if (isDead) {
+    mostrarCruz = false;
+  }
+};
 
   // ---------------------------
   // ☠️ Activar estado de muerte
@@ -334,7 +364,7 @@ let sketch = (p) => {
     resetStartTime = 0;
 
     touchCount = 0;
-    touchMax = Math.floor(Math.random() * 40) + 15;
+    touchMax = Math.floor(Math.random() * 10) + 15;
 
     selectedBG = p.random(bg);
     selectedOverlay = p.random(glitchOverlay);
@@ -416,6 +446,8 @@ let sketch = (p) => {
     }
   }
 };
+//////
+
 
 // Inicializa el sketch
 new p5(sketch);
