@@ -60,7 +60,7 @@ let sketch = (p) => {
 
   // Variable cruz
   let mostrarCruz = false;
-  let cruzX = 0;
+  let cruzX = 10;
   let cruzY = 0;
 
   // ---------------------------
@@ -165,7 +165,7 @@ let sketch = (p) => {
 
       if (mostrarCruz === true) {
         p.blendMode(p.ADD);
-        p.image(finalImage, cruzX, cruzY, 1500, 1900);
+        p.image(finalImage, cruzX, cruzY, 1000, 1900);
         p.blendMode(p.BLEND);
       }
 
