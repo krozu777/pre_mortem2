@@ -165,7 +165,7 @@ let sketch = (p) => {
 
       if (mostrarCruz === true) {
         p.blendMode(p.ADD);
-        p.image(finalImage, cruzX, cruzY, 2000, 1900);
+        p.image(finalImage, cruzX, cruzY, 1500, 1900);
         p.blendMode(p.BLEND);
       }
 
@@ -314,8 +314,6 @@ let sketch = (p) => {
         b.texture = p.random(textureCache);
       }
       ///////////
-
-
     }
 
     return false;
