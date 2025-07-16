@@ -68,7 +68,7 @@ let sketch = (p) => {
   p.preload = () => {
     totalImages = bgFilenames.length + glitchOverlayFilenames.length;
     finalImage = p.loadImage('cargafinal1.png');
-    cruzImg = p.loadImage('arriba_borde.jpg');
+    cruzImg = p.loadImage('c.jpg');
 
     // Carga de imágenes de fondo
     for (let i = 0; i < bgFilenames.length; i++) {
